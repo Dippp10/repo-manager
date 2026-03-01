@@ -1,0 +1,40 @@
+name: Update Topics for All Repos
+
+on:
+  workflow_dispatch: # Manual trigger
+  schedule:
+    - cron: "0 0 * * 0" # Runs every Sunday at midnight UTC
+
+jobs:
+  update-topics:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout workflow repo
+        uses: actions/checkout@v3
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Update topics for all public repos
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_USER: Dippp10  # <-- replace with your GitHub username
+        run: |
+          # Define topics
+          TOPICS=("github-actions" "automation" "python" "scripting")
+
+          # Fetch all public repos
+          REPOS=$(curl -s -H "Authorization: token $GH_PAT" \
+            "https://api.github.com/users/$GITHUB_USER/repos?per_page=100" \
+            | grep -oP '"name": "\K(.*?)(?=")')
+
+          for REPO in $REPOS; do
+            echo "Updating topics for repo: $REPO"
+            curl -s -X PUT -H "Accept: application/vnd.github+json" \
+                 -H "Authorization: token $GH_PAT" \
+                 https://api.github.com/repos/$GITHUB_USER/$REPO/topics \
+                 -d "{\"names\":$(printf '%s\n' "${TOPICS[@]}" | jq -R . | jq -s .)}"
+          done
+
+          echo "✅ All public repos updated with topics!"
