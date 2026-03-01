@@ -21,9 +21,11 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GITHUB_USER: Dippp10   # <-- replace with your GitHub username
         run: |
-          LICENSE_CONTENT='MIT License
+          # Define the license content using EOF block to handle multi-line correctly
+          read -r -d '' LICENSE_CONTENT <<'EOF'
+MIT License
 
-Copyright (c) 2026 DIPIKA VAMAN KANTAPPA POOJARI
+Copyright (c) 2026 DIPIKA VAMAN KANTAPPA POOJARI 
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +43,8 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.'
+SOFTWARE.
+EOF
 
           echo "Fetching public repos..."
           REPOS=$(curl -s -H "Authorization: token $GH_PAT" \
@@ -66,4 +69,4 @@ SOFTWARE.'
             fi
           done
 
-          echo "✅ All public repos processed!" 
+          echo "✅ All public repos processed!"
