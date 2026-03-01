@@ -33,7 +33,7 @@ jobs:
           YEAR=$(date +%Y)
 
           read -r -d '' LICENSE_CONTENT <<EOF
-MIT License
+          MIT License
 
 Copyright (c) $YEAR DIPIKA VAMAN KANTAPPA POOJARI
 
