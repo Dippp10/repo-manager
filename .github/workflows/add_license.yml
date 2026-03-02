@@ -1,10 +1,9 @@
-name: Add MIT License to Public Repositories to run every 6 hours
+name: Add MIT License to Public Repositories
 
 on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
-  
     inputs:
       github_username:
         description: "Dippp10"
@@ -22,38 +21,47 @@ jobs:
       - name: Add MIT License
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-          GITHUB_USER: ${{ github.event.inputs.github_username }}
+          GITHUB_USER: ${{ github.event.inputs.github_username || github.repository_owner }}
         run: |
-
           YEAR=$(date +%Y)
 
           LICENSE_CONTENT="MIT License
+
           Copyright (c) $YEAR DIPIKA VAMAN KANTAPPA POOJARI
+
           Permission is hereby granted, free of charge, to any person obtaining a copy
           of this software and associated documentation files (the \"Software\"), to deal
           in the Software without restriction.
 
           THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND."
 
-          echo "Fetching public repos..."
+          echo "Fetching public repos for $GITHUB_USER..."
 
-          REPOS=$(curl -s -H "Authorization: Bearer $GH_PAT" \
-          "https://api.github.com/users/$GITHUB_USER/repos?per_page=100&type=public" \
-          | jq -r '.[].name')
+          RESPONSE=$(curl -s -H "Authorization: Bearer $GH_PAT" \
+          "https://api.github.com/users/$GITHUB_USER/repos?per_page=100&type=public")
+
+          # Check if API returned array
+          if ! echo "$RESPONSE" | jq -e 'type=="array"' > /dev/null; then
+            echo "❌ API error:"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          REPOS=$(echo "$RESPONSE" | jq -r '.[].name')
 
           for REPO in $REPOS; do
             echo "Processing $REPO..."
 
-            RESPONSE=$(curl -s -H "Authorization: Bearer $GH_PAT" \
+            CHECK=$(curl -s -H "Authorization: Bearer $GH_PAT" \
             "https://api.github.com/repos/$GITHUB_USER/$REPO/contents/LICENSE")
 
-            if echo "$RESPONSE" | grep -q "Not Found"; then
+            if echo "$CHECK" | grep -q "Not Found"; then
 
               echo "Adding LICENSE to $REPO"
 
               ENCODED=$(echo "$LICENSE_CONTENT" | base64 | tr -d '\n')
 
-              curl -X PUT \
+              curl -s -X PUT \
               -H "Authorization: Bearer $GH_PAT" \
               -H "Accept: application/vnd.github+json" \
               https://api.github.com/repos/$GITHUB_USER/$REPO/contents/LICENSE \
