@@ -1,7 +1,10 @@
-name: Add MIT License to Public Repositories
+name: Add MIT License to Public Repositories to run every 6 hours
 
 on:
+  schedule:
+    - cron: '0 */6 * * *'
   workflow_dispatch:
+  
     inputs:
       github_username:
         description: "Dippp10"
